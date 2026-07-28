@@ -15,6 +15,12 @@ def _service():
     return build("sheets", "v4", credentials=creds, cache_discovery=False)
 
 
+def read_sheet(spreadsheet_id, sheet_name):
+    service = _service().spreadsheets().values()
+    result = service.get(spreadsheetId=spreadsheet_id, range=sheet_name).execute()
+    return result.get("values", [])
+
+
 def overwrite_sheet(spreadsheet_id, sheet_name, header, rows):
     service = _service().spreadsheets().values()
     full_range = f"{sheet_name}!A:Z"

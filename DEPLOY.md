@@ -96,15 +96,15 @@ vercel deploy --prod
 
 ```json
 "crons": [
-  { "path": "/sync-invoices", "schedule": "0 0 * * *" }
+  { "path": "/sync-invoices", "schedule": "0 0 1 * *" }
 ]
 ```
 
-`schedule` 是 **UTC 時間**的 cron 表達式,`0 0 * * *` = 每天 UTC 00:00 = 台北時間每天早上 8 點。
-要改時間就直接改這個 cron 表達式並重新部署。
+`schedule` 是 **UTC 時間**的 cron 表達式,`0 0 1 * *` = 每月 1 號 UTC 00:00 = 台北時間每月 1 號
+早上 8 點。要改時間就直接改這個 cron 表達式並重新部署。
 
-> **方案限制**:Vercel Hobby 方案的 Cron Jobs 最多只能設定為每天觸發一次(且同帳號的 cron 數量有
-> 上限),Pro 方案才能設定更高頻率。目前「每天一次」的需求在 Hobby 方案下沒問題。
+> **方案限制**:Vercel Hobby 方案的 Cron Jobs 每個 job 最快只能設定為「每天一次」,同帳號的 cron
+> 數量也有上限;Pro 方案才能設定更高頻率。目前「每月一次」的需求在 Hobby 方案下沒問題。
 >
 > **執行時間限制**:`vercel.json` 把 `maxDuration` 設為 60 秒,若 invoice 數量多導致撈取 + 寫入
 > Sheet 超時,需要確認你的 Vercel 方案可用的最大值並調整這個數字。

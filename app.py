@@ -65,8 +65,16 @@ def sync_invoices():
         token_store.save_token(refreshed)
 
         invoices = qbo_client.fetch_invoices(refreshed["access_token"], refreshed["realm_id"])
-        rows = [_invoice_to_row(inv) for inv in invoices]
+        cus=sheets_client.read_sheet(
+            spreadsheet_id=os.environ["GOOGLE_SHEET_ID"],
+            sheet_name="cusList",
+        )
 
+        rows = [_invoice_to_row(inv) for inv in invoices for c in cus]
+        sheets_client.read_sheet(
+            spreadsheet_id=os.environ["GOOGLE_SHEET_ID"],
+            sheet_name=os.environ.get("GOOGLE_SHEET_NAME", "Invoices"),
+        )
         sheets_client.overwrite_sheet(
             spreadsheet_id=os.environ["GOOGLE_SHEET_ID"],
             sheet_name=os.environ.get("GOOGLE_SHEET_NAME", "Invoices"),
@@ -80,6 +88,14 @@ def sync_invoices():
         logger.exception("sync-invoices failed")
         return jsonify({"status": "error"}), 500
 
-
+def loadSheet(sheet_name="cusList"):
+    try:
+        return sheets_client.read_sheet(
+            spreadsheet_id=os.environ["GOOGLE_SHEET_ID"],
+            sheet_name=sheet_name,
+        )
+    except Exception:
+        logger.exception("loadSheet failed")
+        return None
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
