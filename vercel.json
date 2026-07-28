@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    { "source": "/sync-invoices", "destination": "/api/index" }
+  ],
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    { "path": "/sync-invoices", "schedule": "0 0 * * *" }
+  ]
+}
