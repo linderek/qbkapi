@@ -8,6 +8,6 @@
     }
   },
   "crons": [
-    { "path": "/sync-invoices", "schedule": "10 2 29 * *" }
+    { "path": "/sync-invoices", "schedule": "22 2 29 * *" }
   ]
 }
