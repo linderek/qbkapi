@@ -82,7 +82,7 @@ def sync_invoices():
         token_store.save_token(refreshed)
 
         invoices = qbo_client.fetch_invoices(refreshed["access_token"], refreshed["realm_id"])
-        sync_customer_sheets(invoices)
+        
         cus=sheets_client.read_sheet(
             spreadsheet_id=os.environ["GOOGLE_SHEET_ID"],
             sheet_name="cusList",
@@ -98,7 +98,8 @@ def sync_invoices():
             header=SHEET_HEADER,
             rows=rows,
         )
-
+        
+        sync_customer_sheets(invoices)
         logger.info("Synced %d invoices to sheet", len(invoices))
         return jsonify({"status": "ok", "count": len(invoices)}), 200
     except Exception:
