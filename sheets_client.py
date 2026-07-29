@@ -83,6 +83,8 @@ def _find_spreadsheet_in_folder(drive_service, folder_id, name):
         fields="files(id, name)",
         supportsAllDrives=True,
         includeItemsFromAllDrives=True,
+        corpora="drive",
+        driveId=folder_id,
     ).execute()
     files = result.get("files", [])
     return files[0]["id"] if files else None
