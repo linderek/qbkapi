@@ -33,6 +33,22 @@ app 會檢查這個值是否吻合;**沒有設定 `CRON_SECRET` 的話,這支 AP
 https://docs.google.com/spreadsheets/d/<這一段就是 GOOGLE_SHEET_ID>/edit
 ```
 
+「依 Customer 建立獨立 Sheet」這個功能需要 service account **在 Shared Drive(共用雲端硬碟)裡建立新檔案**——一般資料夾即使分享給 service account 編輯權限,由它新建的檔案還是會計入
+service account 自己的儲存配額(而 service account 配額是 0),一定會失敗。所以目標資料夾必須
+是 Shared Drive、或 Shared Drive 底下的子資料夾:
+
+1. Google Drive 左側選單「共用雲端硬碟」→「新增」建立一個(或使用現有的)
+2. 進入該 Shared Drive → 右上角「管理成員」→ 把 service account 的 `client_email` 加為
+   **內容管理員** 以上權限
+3. 要放 Customer Sheet 的資料夾要在這個 Shared Drive 裡面(可以是 Shared Drive 根目錄,也可以
+   是裡面的子資料夾)
+
+從該資料夾的網址取得 `GOOGLE_DRIVE_FOLDER_ID`:
+
+```
+https://drive.google.com/drive/folders/<這一段就是 GOOGLE_DRIVE_FOLDER_ID>
+```
+
 把下載的 JSON 壓成單行,準備放進環境變數(假設檔名是 `sa-key.json`):
 
 ```bash
@@ -75,6 +91,7 @@ curl -X POST http://localhost:8000/sync-invoices \
 - `GOOGLE_SHEET_ID`
 - `GOOGLE_SHEET_NAME`
 - `GOOGLE_SERVICE_ACCOUNT_JSON`
+- `GOOGLE_DRIVE_FOLDER_ID`
 - `CRON_SECRET`
 - `FLASK_SECRET_KEY`
 
@@ -85,7 +102,7 @@ vercel link
 for name in INTUIT_CLIENT_ID INTUIT_CLIENT_SECRET INTUIT_REDIRECT_URI \
     QUICKBOOKS_ENVIRONMENT QUICKBOOKS_BASE_URL UPSTASH_REDIS_REST_URL \
     UPSTASH_REDIS_REST_TOKEN GOOGLE_SHEET_ID GOOGLE_SHEET_NAME \
-    GOOGLE_SERVICE_ACCOUNT_JSON CRON_SECRET FLASK_SECRET_KEY; do
+    GOOGLE_SERVICE_ACCOUNT_JSON GOOGLE_DRIVE_FOLDER_ID CRON_SECRET FLASK_SECRET_KEY; do
     vercel env add "$name" production
 done
 

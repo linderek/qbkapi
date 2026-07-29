@@ -1,6 +1,7 @@
 import hmac
 import logging
 import os
+from collections import defaultdict
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
@@ -43,6 +44,22 @@ def _invoice_to_row(inv):
     ]
 
 
+def _group_invoices_by_customer(invoices):
+    grouped = defaultdict(list)
+    for inv in invoices:
+        customer = inv.get("CustomerRef", {}).get("name") or "Unknown"
+        grouped[customer].append(_invoice_to_row(inv))
+    return grouped
+
+
+def sync_customer_sheets(invoices):
+    folder_id = os.environ["GOOGLE_DRIVE_FOLDER_ID"]
+    grouped = _group_invoices_by_customer(invoices)
+    for customer, rows in grouped.items():
+        sheets_client.write_customer_sheet(folder_id, customer, SHEET_HEADER, rows)
+    logger.info("Synced %d customer sheets", len(grouped))
+
+
 def _scheduler_authorized():
     expected = os.environ.get("CRON_SECRET")
     if not expected:
@@ -65,16 +82,16 @@ def sync_invoices():
         token_store.save_token(refreshed)
 
         invoices = qbo_client.fetch_invoices(refreshed["access_token"], refreshed["realm_id"])
+        sync_customer_sheets(invoices)
         cus=sheets_client.read_sheet(
             spreadsheet_id=os.environ["GOOGLE_SHEET_ID"],
             sheet_name="cusList",
         )
 
-        rows = [_invoice_to_row(inv) for inv in invoices for c in cus]
-        sheets_client.read_sheet(
-            spreadsheet_id=os.environ["GOOGLE_SHEET_ID"],
-            sheet_name=os.environ.get("GOOGLE_SHEET_NAME", "Invoices"),
-        )
+        rows = [_invoice_to_row(inv) for inv in invoices ]
+        ##for c in cus:
+        ##    rows.append(c)
+
         sheets_client.overwrite_sheet(
             spreadsheet_id=os.environ["GOOGLE_SHEET_ID"],
             sheet_name=os.environ.get("GOOGLE_SHEET_NAME", "Invoices"),
@@ -90,7 +107,7 @@ def sync_invoices():
 
 def loadSheet(sheet_name="cusList"):
     try:
-        return sheets_client.read_sheet(
+        return sheets_client.read_sheet_with_links(
             spreadsheet_id=os.environ["GOOGLE_SHEET_ID"],
             sheet_name=sheet_name,
         )
