@@ -59,8 +59,9 @@ def sync_customer_sheets(invoices):
 
     timestamp = datetime.now().strftime("%Y-%m_%H%M")
     for customer, rows in grouped.items():
-        subfolder_id=sheets_client.sync_customer_folder(folder_id, customer)
-        sheet_name = f"{customer}_{timestamp}"
+        subfolder_id=sheets_client.find_folder(folder_id, customer)
+        subfolder_id=sheets_client.find_folder(subfolder_id, datetime.now().strftime("%Y-%m"))
+        sheet_name = f"{timestamp}-{customer}"
         sheets_client.write_customer_sheet(subfolder_id, sheet_name, SHEET_HEADER, rows)
     logger.info("Synced %d customer sheets", len(grouped))
 
