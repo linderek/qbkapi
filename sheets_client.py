@@ -106,7 +106,7 @@ def _find_folder_in_folder(drive_service, parent_folder_id, name):
     return files[0]["id"] if files else None
 
 
-def create_folder(parent_folder_id, folder_name):
+def find_folder(parent_folder_id, folder_name):
     """Find-or-create a folder named `folder_name` under `parent_folder_id`,
     return its folder id."""
     drive_service = _drive_service()
