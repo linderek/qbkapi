@@ -2,6 +2,7 @@ import hmac
 import logging
 import os
 from collections import defaultdict
+from datetime import datetime
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
@@ -55,8 +56,12 @@ def _group_invoices_by_customer(invoices):
 def sync_customer_sheets(invoices):
     folder_id = os.environ["GOOGLE_DRIVE_FOLDER_ID"]
     grouped = _group_invoices_by_customer(invoices)
+
+    timestamp = datetime.now().strftime("%Y-%m_%H%M")
     for customer, rows in grouped.items():
-        sheets_client.write_customer_sheet(folder_id, customer, SHEET_HEADER, rows)
+        subfolder_id=sheets_client.sync_customer_folder(folder_id, customer)
+        sheet_name = f"{customer}_{timestamp}"
+        sheets_client.write_customer_sheet(subfolder_id, sheet_name, SHEET_HEADER, rows)
     logger.info("Synced %d customer sheets", len(grouped))
 
 
@@ -98,7 +103,7 @@ def sync_invoices():
             header=SHEET_HEADER,
             rows=rows,
         )
-        
+
         sync_customer_sheets(invoices)
         logger.info("Synced %d invoices to sheet", len(invoices))
         return jsonify({"status": "ok", "count": len(invoices)}), 200

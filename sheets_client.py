@@ -83,11 +83,48 @@ def _find_spreadsheet_in_folder(drive_service, folder_id, name):
         fields="files(id, name)",
         supportsAllDrives=True,
         includeItemsFromAllDrives=True,
-        corpora="drive",
-        driveId=folder_id,
+        corpora="allDrives",
     ).execute()
     files = result.get("files", [])
     return files[0]["id"] if files else None
+
+
+def _find_folder_in_folder(drive_service, parent_folder_id, name):
+    safe_name = name.replace("\\", "\\\\").replace("'", "\\'")
+    query = (
+        f"name = '{safe_name}' and '{parent_folder_id}' in parents "
+        "and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+    )
+    result = drive_service.files().list(
+        q=query,
+        fields="files(id, name)",
+        supportsAllDrives=True,
+        includeItemsFromAllDrives=True,
+        corpora="allDrives",
+    ).execute()
+    files = result.get("files", [])
+    return files[0]["id"] if files else None
+
+
+def sync_customer_folder(parent_folder_id, folder_name):
+    """Find-or-create a folder named `folder_name` under `parent_folder_id`,
+    return its folder id."""
+    drive_service = _drive_service()
+    folder_id = _find_folder_in_folder(drive_service, parent_folder_id, folder_name)
+
+    if folder_id is None:
+        created = drive_service.files().create(
+            body={
+                "name": folder_name,
+                "mimeType": "application/vnd.google-apps.folder",
+                "parents": [parent_folder_id],
+            },
+            fields="id",
+            supportsAllDrives=True,
+        ).execute()
+        folder_id = created["id"]
+
+    return folder_id
 
 
 def write_customer_sheet(folder_id, customer_name, header, rows):
